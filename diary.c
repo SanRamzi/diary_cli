@@ -107,11 +107,16 @@ int main()
     }
     if (strncmp(command, "3", 1) == 0)
     {
+      FILE *show = fopen("diary", "r");
+      if (show == NULL)
+      {
+        puts("No entries found in the diary!");
+        continue;
+      }
       puts("Removing entry from diary");
       fputs("Please enter the date of the entry you want to remove (YYYY-MM-DD): ", stdout);
       char date[100];
       fgets(date, 100, stdin);
-      FILE *show = fopen("diary", "r");
       diary_entry entry;
       int count = 1;
       while (fread(&entry, sizeof(diary_entry), 1, show))
@@ -160,7 +165,26 @@ int main()
       menu();
       continue;
     }
-    if (strncmp(command, "5", 1) == 0 || strncmp(command, "exit", 4) == 0 || strncmp(command, "quit", 4) == 0 || strncmp(command, "bye", 3) == 0)
+    if (strncmp(command, "5", 1) == 0)
+    {
+      FILE *file = fopen("diary", "r");
+      if (file == NULL)
+      {
+        puts("No entries found in the diary!");
+        continue;
+      }
+      FILE *backup = fopen("backup", "w");
+      diary_entry entry;
+      while (fread(&entry, sizeof(diary_entry), 1, file))
+      {
+        fwrite(&entry, sizeof(diary_entry), 1, backup);
+      }
+      fclose(file);
+      fclose(backup);
+      puts("Backup created successfully!");
+      continue;
+    }
+    if (strncmp(command, "6", 1) == 0 || strncmp(command, "exit", 4) == 0 || strncmp(command, "quit", 4) == 0 || strncmp(command, "bye", 3) == 0)
     {
       puts("Goodbye!");
       return 0;
@@ -171,17 +195,18 @@ int main()
 // Welcome user to the diary
 void welcome()
 {
-  FILE *file = fopen("user", "r");
-  if (file == NULL) // If the file does not exist
+  FILE *file = fopen("user", "r"); // Open the file in read mode
+  if (file == NULL)                // If the file does not exist
   {
-    puts("Welcome to your diary!");
-    puts("It seems like this is your first time.");
-    fputs("Please enter your name: ", stdout);
-    char name[100]; // Name of the user
-    scanf("%s", name);
-    file = fopen("user", "w");
-    fprintf(file, "%s", name); // Write the name to the file
-    fclose(file);
+    puts("Welcome to your diary!");                 // Display welcome message
+    puts("It seems like this is your first time."); // Display welcome message
+    fputs("Please enter your name: ", stdout);      // Ask the user to enter their name
+    char name[100];                                 // Name of the user
+    scanf("%s", name);                              // Get the name from the user
+    getchar();                                      // Consume the newline character
+    file = fopen("user", "w");                      // Open the file in write mode
+    fprintf(file, "%s", name);                      // Write the name to the file
+    fclose(file);                                   // Close the file
   }
   else
   {
@@ -198,5 +223,6 @@ void menu()
   puts("2. View");
   puts("3. Remove");
   puts("4. Help");
-  puts("5. Exit");
+  puts("5. Backup");
+  puts("6. Exit");
 }
