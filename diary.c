@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+
 typedef struct // Structure for the diary entry
 {
   char date[100];
@@ -31,6 +32,11 @@ int main()
       fputs("Please type in your entry: ", stdout);
       char entry[2000]; // Diary entry
       fgets(entry, 2000, stdin);
+      if (strncmp(entry, " ", 1) == 0 || strncmp(entry, "\n", 1) == 0)
+      {
+        continue;
+      }
+      // Get the current date and time
       time_t t = time(NULL);
       struct tm tm = *localtime(&t);
       char date[100];
@@ -41,7 +47,7 @@ int main()
       strcpy(new_entry.entry, entry);
       strcpy(new_entry.date, date);
       strcpy(new_entry.time, time);
-      FILE *file = fopen("diary", "a");
+      FILE *file = fopen("diary_entries", "a");
       fwrite(&new_entry, sizeof(diary_entry), 1, file);
       fclose(file);
       continue;
@@ -50,7 +56,7 @@ int main()
     {
       while (1)
       {
-        FILE *file = fopen("diary", "r");
+        FILE *file = fopen("diary_entries", "r");
         if (file == NULL)
         {
           puts("No entries found in the diary!");
@@ -58,19 +64,22 @@ int main()
         }
         puts("Type 1 to view today's entries");
         puts("Type 2 to view all entries");
-        puts("Type 3 to go back to the menu");
+        puts("Type 3 to search for a specific date");
+        puts("Type 4 to go back to the menu");
         fputs("View> ", stdout);
         char view_command[100]; // Command to view the diary entries
         fgets(view_command, 100, stdin);
         if (strncmp(view_command, " ", 1) == 0 || strncmp(view_command, "\n", 1) == 0)
         {
+          fclose(file);
           continue;
         }
-        if (strncmp(view_command, "3", 1) == 0)
+        else if (strncmp(view_command, "4", 1) == 0)
         {
+          fclose(file);
           break;
         }
-        if (strncmp(view_command, "1", 1) == 0)
+        else if (strncmp(view_command, "1", 1) == 0)
         {
           diary_entry entry;
           while (fread(&entry, sizeof(diary_entry), 1, file))
@@ -89,9 +98,8 @@ int main()
           fclose(file);
           continue;
         }
-        if (strncmp(view_command, "2", 1) == 0)
+        else if (strncmp(view_command, "2", 1) == 0)
         {
-          FILE *file = fopen("diary", "r");
           diary_entry entry;
           while (fread(&entry, sizeof(diary_entry), 1, file))
           {
@@ -102,12 +110,33 @@ int main()
           fclose(file);
           continue;
         }
+        else if (strncmp(view_command, "3", 1) == 0)
+        {
+          fputs("Please enter the date you want to search for (YYYY-MM-DD): ", stdout);
+          char date[100];
+          fgets(date, 100, stdin);
+          diary_entry entry;
+          int count = 1;
+          while (fread(&entry, sizeof(diary_entry), 1, file))
+          {
+            if (strncmp(entry.date, date, 10) == 0)
+            {
+              printf("Entry %d\n", count);
+              printf("Date: %s\n", entry.date);
+              printf("Time: %s\n", entry.time);
+              printf("Entry: %s\n", entry.entry);
+              count++;
+            }
+          }
+          fclose(file);
+          continue;
+        }
       }
       continue;
     }
     if (strncmp(command, "3", 1) == 0)
     {
-      FILE *show = fopen("diary", "r");
+      FILE *show = fopen("diary_entries", "r");
       if (show == NULL)
       {
         puts("No entries found in the diary!");
@@ -139,7 +168,7 @@ int main()
       {
         continue;
       }
-      FILE *file = fopen("diary", "r");
+      FILE *file = fopen("diary_entries", "r");
       FILE *temp = fopen("temp", "w");
       count = 1;
       while (fread(&entry, sizeof(diary_entry), 1, file))
@@ -155,8 +184,8 @@ int main()
       }
       fclose(file);
       fclose(temp);
-      remove("diary");
-      rename("temp", "diary");
+      remove("diary_entries");
+      rename("temp", "diary_entries");
       puts("Entry removed successfully!");
       continue;
     }
@@ -167,7 +196,7 @@ int main()
     }
     if (strncmp(command, "5", 1) == 0)
     {
-      FILE *file = fopen("diary", "r");
+      FILE *file = fopen("diary_entries", "r");
       if (file == NULL)
       {
         puts("No entries found in the diary!");
